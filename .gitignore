@@ -1,0 +1,18 @@
+# Build output
+/central-skills-server
+/bin/
+
+# Go tooling
+*.test
+*.out
+coverage.html
+
+# Local configuration and editor files
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Local skill fixtures and temporary files
+/tmp/
