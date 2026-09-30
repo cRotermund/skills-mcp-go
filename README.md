@@ -1,8 +1,8 @@
-# Central Skills MCP Server
+# Skills MCP Server
 
-Central Skills is a Go-native local skills management engine and MCP server. It discovers Markdown-based skills from a configurable directory, validates their YAML frontmatter, tracks semantic versions, and serves skill instructions and text assets over MCP STDIO.
+Skills MCP Server is a Go-native local skills management engine and MCP server. It discovers Markdown-based skills from a configurable directory, validates their YAML frontmatter, tracks semantic versions, and serves skill instructions and text assets over MCP STDIO.
 
-The project is currently in the design and scaffolding phase. The implementation will be added incrementally under `cmd/` and `pkg/`.
+The initial implementation is being developed under `cmd/` and `pkg/`. The server is designed as a local, read-only process with no command execution authority.
 
 ## Scope
 
@@ -27,7 +27,7 @@ The server will not execute commands, invoke shells, or execute skill scripts. A
 └── testdata/skills/  # Representative skill fixtures
 ```
 
-Go source is kept at the module root rather than under `src/` so the project follows standard Go layout and retains the expected command:
+Build the server with:
 
 ```text
 go build ./cmd/server
@@ -63,15 +63,15 @@ allowed_tools:
 Markdown instructions follow the frontmatter.
 ```
 
-The default skill directory is `~/.config/agentic/skills`. Set `CENTRAL_SKILLS_DIR` to use another directory.
+The default skill directory is `~/.config/agentic/skills`. Set `SKILLS_DIR` to use another directory.
 
 ## Planned MCP Surface
 
 Resources:
 
-- `skill://{skill-name}` for the complete `SKILL.md`.
-- `skill://{skill-name}/scripts/{asset-path}` for readable script assets.
-- `skill://{skill-name}/tools/{asset-path}` for readable tool assets.
+- `skill://{skill_name}` for the complete `SKILL.md`.
+- `skill://{skill_name}/scripts/{+asset_path}` for readable script assets.
+- `skill://{skill_name}/tools/{+asset_path}` for readable tool assets.
 
 Prompts:
 
@@ -86,7 +86,48 @@ No server-side execution tool is planned.
 
 ## Configuration and Clients
 
-The server will communicate over STDIO. Client-specific configuration examples for Cursor, Claude Desktop, and custom Go or LangGraph hosts will be added when the server implementation is available.
+The server communicates over STDIO. Set the skill directory before starting it:
+
+```text
+SKILLS_DIR=/absolute/path/to/skills skills-server
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:SKILLS_DIR = "C:\work\skills"
+.\skills-server.exe
+```
+
+The default directory is `~/.config/agentic/skills`.
+
+The server can be registered with an MCP client using a configuration equivalent to:
+
+```json
+{
+  "mcpServers": {
+    "skills-mcp": {
+      "command": "/absolute/path/to/skills-server",
+      "env": {
+        "SKILLS_DIR": "/absolute/path/to/skills"
+      }
+    }
+  }
+}
+```
+
+Custom Go and LangGraph hosts should launch the binary as an MCP STDIO server and use their host's MCP client adapter to initialize the session, list tools/resources, and read skill context. The server does not execute commands described by a skill; execution, if supported, belongs to the consuming host.
+
+## Development Commands
+
+```text
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./cmd/server
+```
+
+The Makefile provides equivalent `build`, `test`, `race`, `vet`, `install`, and `dev` targets.
 
 The design and implementation decisions are documented in:
 
@@ -96,4 +137,4 @@ The design and implementation decisions are documented in:
 
 ## Development Status
 
-The repository currently contains the project scaffold and design documentation. Build, test, and installation commands will be documented here as the implementation lands.
+The initial read-only server implementation, tests, build tooling, and design documentation are present. Additional client compatibility and operational documentation can be expanded as implementation experience accumulates.

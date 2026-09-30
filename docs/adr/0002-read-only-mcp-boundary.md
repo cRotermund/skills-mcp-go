@@ -19,4 +19,4 @@ The MCP surface is limited to skill discovery, context loading, prompts, and rea
 - The server has a substantially smaller security boundary.
 - Skills can still describe commands and workflows for a capable host.
 - Clients that need execution must supply that capability separately.
-- The central server remains portable and focused on content delivery.
+- The server remains portable and focused on content delivery.

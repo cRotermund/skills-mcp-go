@@ -1,4 +1,4 @@
-# Central Skills MCP Runtime Engine Design
+# Skills MCP Runtime Engine Design
 
 ## Status
 
@@ -43,7 +43,7 @@ The project intentionally does not use `/src`. This preserves standard Go packag
 
 ## Configuration
 
-The skill root is configured through `CENTRAL_SKILLS_DIR`.
+The skill root is configured through `SKILLS_DIR`.
 
 If unset, the server uses:
 
@@ -138,7 +138,7 @@ New directories must become watched so newly added nested skills are discovered.
 ### Skill Resource
 
 ```text
-skill://{skill-name}
+skill://{skill_name}
 ```
 
 This resource returns the complete `SKILL.md` as `text/markdown`. An unversioned request resolves to the latest version. Explicit version selection may be represented through the URI query or the resource resolution contract, subject to the selected MCP library's URI-template behavior.
@@ -146,8 +146,8 @@ This resource returns the complete `SKILL.md` as `text/markdown`. An unversioned
 ### Asset Resources
 
 ```text
-skill://{skill-name}/scripts/{asset-path}
-skill://{skill-name}/tools/{asset-path}
+skill://{skill_name}/scripts/{+asset_path}
+skill://{skill_name}/tools/{+asset_path}
 ```
 
 Asset resources return readable text files only. The server resolves the skill from the repository, then validates the asset path relative to that skill's directory.
@@ -206,4 +206,4 @@ go build ./cmd/server
 
 ## Consequences
 
-This design favors a small, auditable read-only service over an all-purpose agent runtime. The tradeoff is that clients must supply their own execution tools when a skill requires commands to be run. That separation avoids platform-specific shell behavior and prevents the central server from becoming an arbitrary process execution boundary.
+This design favors a small, auditable read-only service over an all-purpose agent runtime. The tradeoff is that clients must supply their own execution tools when a skill requires commands to be run. That separation avoids platform-specific shell behavior and prevents the server from becoming an arbitrary process execution boundary.
