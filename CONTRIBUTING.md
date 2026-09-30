@@ -22,6 +22,26 @@ go build ./cmd/server
 
 Documentation-only changes should still be checked for broken paths, stale commands, and consistency with the design documents.
 
+## Branches and Pull Requests
+
+Do not commit or push directly to `master`. Start each change from an up-to-date `master` branch and use a dedicated feature branch:
+
+```text
+feature/<short-description>
+fix/<short-description>
+docs/<short-description>
+chore/<short-description>
+```
+
+Keep a branch focused on one logical change. Commit locally using the Conventional Commits format, push the feature branch, and open a pull request for review. Changes should enter `master` through an approved pull request rather than direct pushes.
+
+Before opening a pull request:
+
+- Confirm the branch contains only the intended changes.
+- Run the relevant validation commands.
+- Rebase or update from `master` when required by the repository workflow.
+- Include a clear summary, validation results, and any relevant ADR references in the pull request description.
+
 ## Conventional Commits
 
 Commit messages use the Conventional Commits format:

@@ -32,6 +32,9 @@ Do not move Go code under `src/`; the root-level layout preserves standard Go co
 ## Change Process
 
 - Use Conventional Commits.
+- Work on a dedicated feature branch; do not commit or push directly to `master`.
+- Prefer pull requests for all changes and merge through the repository review process.
+- Use branch names such as `feature/<short-description>`, `fix/<short-description>`, `docs/<short-description>`, or `chore/<short-description>`.
 - Add an ADR for significant architectural decisions.
 - Keep changes focused and add tests for changed behavior.
 - Before considering implementation complete, run `go test ./...`, `go test -race ./...`, `go vet ./...`, and `go build ./cmd/server`.
