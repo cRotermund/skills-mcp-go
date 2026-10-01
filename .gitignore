@@ -1,5 +1,6 @@
 # Build output
-/central-skills-server
+/skills-server
+/server.exe
 /bin/
 
 # Go tooling

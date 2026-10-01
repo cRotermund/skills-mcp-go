@@ -1,50 +1,115 @@
-# Central Skills MCP Server
+# Skills MCP Server
 
-Central Skills is a Go-native local skills management engine and MCP server. It discovers Markdown-based skills from a configurable directory, validates their YAML frontmatter, tracks semantic versions, and serves skill instructions and text assets over MCP STDIO.
+Skills MCP Server is a local, read-only MCP server for discovering Markdown-based skills and making their instructions available to MCP clients over STDIO.
 
-The project is currently in the design and scaffolding phase. The implementation will be added incrementally under `cmd/` and `pkg/`.
+It is useful when you want one skills directory to be discoverable by Cursor, Claude Desktop, or a custom MCP host without giving this server permission to execute commands or scripts.
 
-## Scope
+## Features
 
-The first release is intentionally read-only:
+- Recursively discovers `SKILL.md` files.
+- Validates YAML frontmatter and semantic versions.
+- Supports multiple versions of the same skill.
+- Resolves unversioned requests to the latest valid version.
+- Watches the skills directory for changes.
+- Serves complete `SKILL.md` files as Markdown resources.
+- Serves readable text assets from `scripts/` and `tools/`.
+- Reports malformed skills as diagnostics while continuing to serve valid skills.
+- Provides read-only MCP prompts and tools.
 
-- Discover `SKILL.md` files recursively.
-- Preserve and serve the complete Markdown skill document.
-- Track multiple semantic versions of a skill.
-- Expose readable text files under `scripts/` and `tools/` as resources.
-- Provide MCP resources, prompts, and read-only discovery tools.
-- Continue serving valid skills when individual skills are malformed.
+The server never executes commands, invokes a shell, or executes skill assets. If a skill describes commands, execution is the responsibility of the consuming MCP host.
 
-The server will not execute commands, invoke shells, or execute skill scripts. A consuming MCP host may provide its own execution capabilities when appropriate.
+## Quick Start: Using the Server
 
-## Planned Layout
+### 1. Create a skills directory
 
-```text
-.
-├── cmd/server/       # MCP server entrypoint
-├── pkg/skills/       # Parser, scanner, repository, and watcher
-├── docs/              # Design, implementation plan, and ADRs
-└── testdata/skills/  # Representative skill fixtures
-```
-
-Go source is kept at the module root rather than under `src/` so the project follows standard Go layout and retains the expected command:
+Create a directory for your skills and add one subdirectory per skill:
 
 ```text
-go build ./cmd/server
+skills/
+└── hello-world/
+    └── SKILL.md
 ```
+
+Add a minimal `SKILL.md`:
+
+```markdown
+---
+name: hello-world
+version: 1.0.0
+description: A simple example skill.
+---
+
+# Hello World
+
+When this skill is loaded, explain the task clearly and provide a concise answer.
+```
+
+### 2. Build the server
+
+From the repository root, build the server binary:
+
+```text
+go build -o skills-server ./cmd/server
+```
+
+### 3. Start the server
+
+Point `SKILLS_DIR` at the existing skills directory:
+
+```text
+SKILLS_DIR=/absolute/path/to/skills skills-server
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:SKILLS_DIR = "C:\work\skills"
+.\skills-server.exe
+```
+
+The server starts an MCP STDIO session and makes the `hello-world` skill available through `list_available_skills`, `load_skill_context`, and the `skill://hello-world` resource.
+
+### 4. Connect an MCP client
+
+Configure your MCP client to launch the binary with the same environment variable:
+
+```json
+{
+  "mcpServers": {
+    "skills-mcp": {
+      "command": "/absolute/path/to/skills-server",
+      "env": {
+        "SKILLS_DIR": "/absolute/path/to/skills"
+      }
+    }
+  }
+}
+```
+
+The server watches the directory after startup. Adding another valid skill directory makes it available after the next filesystem rescan without changing server code.
+
+## Requirements
+
+- Go 1.26 or newer.
+- An existing skills directory.
+
+The server does not create the skills directory. It fails to start if the configured directory does not exist or is not a directory.
+
+## Install
+
+Build the server from the repository root:
+
+```text
+go build -o skills-server ./cmd/server
+```
+
+The resulting `skills-server` binary is the only runtime artifact required by the server.
+
+The Makefile also provides `build`, `test`, `race`, `vet`, `install`, and `dev` targets.
 
 ## Skill Format
 
-Each skill is stored in its own directory:
-
-```text
-go-concurrency-audit/
-├── SKILL.md
-├── scripts/          # Optional readable text assets
-└── tools/            # Optional readable text assets
-```
-
-`SKILL.md` begins with YAML frontmatter:
+Each `SKILL.md` starts with YAML frontmatter:
 
 ```markdown
 ---
@@ -63,37 +128,65 @@ allowed_tools:
 Markdown instructions follow the frontmatter.
 ```
 
-The default skill directory is `~/.config/agentic/skills`. Set `CENTRAL_SKILLS_DIR` to use another directory.
+The `name`, `version`, and `description` fields are required. `triggers` and `allowed_tools` are optional lists.
 
-## Planned MCP Surface
+Files below `scripts/` and `tools/` are exposed only when they are regular, readable text files. They are never executed by this server.
+
+## MCP Interface
 
 Resources:
 
-- `skill://{skill-name}` for the complete `SKILL.md`.
-- `skill://{skill-name}/scripts/{asset-path}` for readable script assets.
-- `skill://{skill-name}/tools/{asset-path}` for readable tool assets.
+- `skill://{skill_name}` returns the complete `SKILL.md`.
+- `skill://{skill_name}/scripts/{+asset_path}` returns a readable script asset.
+- `skill://{skill_name}/tools/{+asset_path}` returns a readable tool asset.
 
 Prompts:
 
-- `get_skill_prompt`, accepting a skill name, optional version or semver constraint, and optional target workspace context.
+- `get_skill_prompt` loads a selected skill into conversation context.
 
 Tools:
 
-- `list_available_skills` for version and description metadata.
-- `load_skill_context` for retrieving complete skill Markdown through clients that prefer tools.
+- `list_available_skills` lists skill names, versions, descriptions, and text assets.
+- `load_skill_context` returns the complete `SKILL.md` for a selected skill.
 
-No server-side execution tool is planned.
+Version arguments accept exact versions and semantic-version constraints. An omitted version selects the latest valid version.
 
-## Configuration and Clients
+## MCP Client Configuration
 
-The server will communicate over STDIO. Client-specific configuration examples for Cursor, Claude Desktop, and custom Go or LangGraph hosts will be added when the server implementation is available.
+An MCP client can launch the server with a configuration equivalent to:
 
-The design and implementation decisions are documented in:
+```json
+{
+  "mcpServers": {
+    "skills-mcp": {
+      "command": "/absolute/path/to/skills-server",
+      "env": {
+        "SKILLS_DIR": "/absolute/path/to/skills"
+      }
+    }
+  }
+}
+```
 
-- [`docs/design.md`](docs/design.md)
-- [`docs/plan.md`](docs/plan.md)
-- [`docs/adr/`](docs/adr/)
+Custom Go and LangGraph hosts should launch the binary as an MCP STDIO server and use their MCP client adapter to initialize the session and read resources, prompts, and tools.
 
-## Development Status
+## Development
 
-The repository currently contains the project scaffold and design documentation. Build, test, and installation commands will be documented here as the implementation lands.
+Run the repository checks with:
+
+```text
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./cmd/server
+```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a change. Design details and architectural decisions are in [`docs/`](docs/), including [`docs/design.md`](docs/design.md), [`docs/plan.md`](docs/plan.md), and [`docs/adr/`](docs/adr/).
+
+## Help
+
+For a defect or feature request, open a GitHub issue with a clear description, reproduction steps when applicable, and the relevant Go version and operating system. For implementation questions or proposed changes, see the contribution guide first.
+
+## Maintainers and Contributors
+
+The project is developed collaboratively. Contributions are welcome through reviewed pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the expected workflow.

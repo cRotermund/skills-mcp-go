@@ -1,4 +1,4 @@
-# Central Skills MCP Runtime Engine Implementation Plan
+# Skills MCP Runtime Engine Implementation Plan
 
 ## Scope
 
@@ -85,7 +85,7 @@ Keep `cmd/server/main.go` thin. Put server construction in a testable function i
 
 Startup sequence:
 
-1. Read and resolve `CENTRAL_SKILLS_DIR`.
+1. Read and resolve `SKILLS_DIR`.
 2. Perform the initial scan.
 3. Log diagnostics.
 4. Create the repository.

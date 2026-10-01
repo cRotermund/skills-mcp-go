@@ -1,17 +1,17 @@
 # Contributing
 
-## Development Principles
+Thank you for helping improve Skills MCP Server. This guide explains how to prepare changes for review. For project behavior and user setup, start with the [`README.md`](README.md).
 
-- Keep the MCP server read-only. Do not add command execution or shell invocation without a new design review and ADR.
-- Prefer small, focused changes with tests at the layer being changed.
-- Preserve exact skill Markdown content when serving `SKILL.md` resources.
-- Treat malformed skills as diagnostics, not reasons to stop serving valid skills.
-- Treat all client-provided resource paths as untrusted input.
-- Keep platform-specific behavior explicit and tested.
+## Before You Start
 
-## Validation
+- Read the relevant section of the README.
+- Read [`docs/design.md`](docs/design.md) before changing architecture or MCP behavior.
+- Check [`docs/adr/`](docs/adr/) for decisions that already constrain the proposed change.
+- Search existing issues and pull requests before opening a duplicate discussion.
 
-Once implementation is present, changes should pass the repository checks:
+## Development Setup
+
+Use the Go version declared by `go.mod`. From the repository root, verify the current implementation with:
 
 ```text
 go test ./...
@@ -20,11 +20,11 @@ go vet ./...
 go build ./cmd/server
 ```
 
-Documentation-only changes should still be checked for broken paths, stale commands, and consistency with the design documents.
+The race test may require a working C compiler on platforms where Go's race detector uses CGO.
 
-## Branches and Pull Requests
+## Branches
 
-Do not commit or push directly to `master`. Start each change from an up-to-date `master` branch and use a dedicated feature branch:
+Do not commit or push directly to `master`. Start from an up-to-date `master` branch and create a focused branch using one of these prefixes:
 
 ```text
 feature/<short-description>
@@ -33,61 +33,61 @@ docs/<short-description>
 chore/<short-description>
 ```
 
-Keep a branch focused on one logical change. Commit locally using the Conventional Commits format, push the feature branch, and open a pull request for review. Changes should enter `master` through an approved pull request rather than direct pushes.
+Keep each branch limited to one logical change.
 
-Before opening a pull request:
+## Making Changes
 
-- Confirm the branch contains only the intended changes.
-- Run the relevant validation commands.
-- Rebase or update from `master` when required by the repository workflow.
-- Include a clear summary, validation results, and any relevant ADR references in the pull request description.
+1. Make the smallest change that solves the problem.
+2. Add or update tests for behavior changes.
+3. Update user-facing documentation when configuration, MCP behavior, or workflows change.
+4. Add an ADR when the change creates or supersedes a significant architectural decision.
+5. Run the relevant validation commands before opening a pull request.
 
-## Conventional Commits
+The server is intentionally read-only. Changes that add command execution, shell invocation, or broader filesystem access require design discussion and an ADR before implementation.
 
-Commit messages use the Conventional Commits format:
+## Commit Messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```text
 <type>(optional scope): short imperative description
 ```
 
-Common types include:
+Common types are:
 
-- `feat`: new user-visible functionality.
-- `fix`: correction of a defect.
-- `test`: tests without production behavior changes.
-- `docs`: documentation-only changes.
-- `refactor`: behavior-preserving code restructuring.
-- `chore`: tooling or maintenance work.
+- `feat`: new functionality.
+- `fix`: a defect correction.
+- `docs`: documentation changes.
+- `test`: test-only changes.
+- `refactor`: behavior-preserving restructuring.
+- `chore`: maintenance and tooling.
 
 Examples:
 
 ```text
 feat(skills): add semantic version resolution
-test(mcp): cover skill resource reads
-docs: record read-only server boundary
+fix(server): reject missing skill roots
+docs: clarify MCP client setup
 ```
 
-Keep commits cohesive. Do not combine unrelated refactors with feature changes.
-
-## Architecture Decision Records
-
-Create or update an ADR for a significant architectural decision, especially when a change affects:
-
-- The MCP surface or protocol behavior.
-- Skill file or URI formats.
-- Version resolution semantics.
-- Filesystem safety or asset exposure.
-- Dependency or project layout strategy.
-- The server's authority boundary.
-
-ADRs live in `docs/adr/` and use sequential numeric filenames such as `0006-short-title.md`. An ADR should state the context, decision, consequences, and alternatives considered. Accepted decisions should be updated only when the decision itself changes; use a new ADR when a later decision supersedes an earlier one.
+Keep commits cohesive and do not combine unrelated refactors with a feature or fix.
 
 ## Pull Requests
 
-Pull requests should describe:
+Push the feature branch and open a pull request instead of merging directly into `master`. A useful pull request includes:
 
-- What changed and why.
-- Any user-visible MCP behavior changes.
-- Tests and validation performed.
-- New or updated ADRs, when applicable.
-- Any known compatibility or platform limitations.
+- A concise summary of what changed and why.
+- The user-visible behavior or API impact.
+- Tests and validation commands that were run.
+- Links to relevant issues or ADRs.
+- Known limitations, compatibility concerns, or follow-up work.
+
+Before requesting review, confirm that the branch contains only the intended changes and that the pull request description matches the implementation.
+
+## Documentation
+
+Keep human-facing setup and usage instructions in `README.md`. Keep contribution workflow in this file. Keep architecture, implementation sequencing, and durable design decisions in `docs/`. Agent-specific instructions belong in `AGENTS.md` and should point to these documents rather than copy them.
+
+## Community Expectations
+
+Be specific, constructive, and respectful in issues, reviews, and discussions. Explain the problem before prescribing a solution, and provide enough context for another contributor to reproduce or evaluate the change.

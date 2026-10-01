@@ -15,9 +15,9 @@ Use MCP resource templates for skills and assets. Store multiple semantic versio
 The planned resource forms are:
 
 ```text
-skill://{skill-name}
-skill://{skill-name}/scripts/{asset-path}
-skill://{skill-name}/tools/{asset-path}
+skill://{skill_name}
+skill://{skill_name}/scripts/{+asset_path}
+skill://{skill_name}/tools/{+asset_path}
 ```
 
 Tools and prompts may accept explicit versions or semver constraints.
