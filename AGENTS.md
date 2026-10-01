@@ -1,42 +1,38 @@
-# Repository Guidance
+# Agent Guidance
 
-## Structure
+This file is an agent-facing index and operating policy. It intentionally does not duplicate human setup, contribution workflow, or architecture prose.
 
-- `cmd/server/` contains the thin executable entrypoint and MCP server wiring.
-- `pkg/skills/` contains reusable parsing, scanning, repository, and watcher logic.
-- `docs/` contains the design, implementation plan, and ADRs.
-- `testdata/skills/` contains stable representative skill fixtures.
+## Read First
 
-Do not move Go code under `src/`; the root-level layout preserves standard Go conventions and the required `go build ./cmd/server` command.
+- Project purpose, setup, usage, MCP interface, and support: [`README.md`](README.md).
+- Branches, testing, commits, pull requests, and documentation ownership: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Architecture and security model: [`docs/design.md`](docs/design.md).
+- Implementation sequence and definition of done: [`docs/plan.md`](docs/plan.md).
+- Durable architectural decisions: [`docs/adr/`](docs/adr/).
 
-## Architectural Boundaries
+Read the relevant source document before making changes. Treat those documents as the source of truth rather than copying their contents into this file.
 
-- The server is read-only.
-- It does not execute commands or scripts.
-- It does not invoke a shell.
-- It serves `SKILL.md` and approved readable text assets only.
-- It must not expose arbitrary filesystem paths.
-- Invalid individual skills produce diagnostics and are skipped; they do not prevent valid skills from loading.
-- MCP transport output must remain on stdout. Diagnostic logging belongs on stderr.
+## Repository Map
 
-## Skill Rules
+- `cmd/server/` contains the executable entrypoint and MCP wiring.
+- `pkg/skills/` contains reusable skill parsing, scanning, repository, and watcher logic.
+- `testdata/skills/` contains stable skill fixtures.
 
-- Parse YAML frontmatter with `gopkg.in/yaml.v3`.
-- Preserve the complete original `SKILL.md` text.
-- Use semantic versioning for skill versions and constraints.
-- Support multiple versions per skill name.
-- Resolve an unversioned skill request to the latest valid version.
-- Expose only regular, readable text files below `scripts/` and `tools/`.
-- Reject traversal, absolute paths, symlink escapes, binary content, invalid UTF-8, and oversized assets.
+## Agent Operating Rules
 
-## Change Process
+- Do not change architecture without first reading `docs/design.md` and `docs/plan.md`.
+- Do not silently broaden the server's authority or MCP surface.
+- Preserve user changes in the worktree; never revert unrelated work.
+- Use focused edits and add tests for changed behavior.
+- Keep protocol output and diagnostic output separated according to the implementation's transport contract.
+- Do not stage, commit, push, or open a pull request unless the user explicitly requests that action.
+- Before reporting implementation complete, run the applicable validation commands from `CONTRIBUTING.md` and disclose any environment limitations.
 
-- Use Conventional Commits.
-- Work on a dedicated feature branch; do not commit or push directly to `master`.
-- Prefer pull requests for all changes and merge through the repository review process.
-- Use branch names such as `feature/<short-description>`, `fix/<short-description>`, `docs/<short-description>`, or `chore/<short-description>`.
-- Add an ADR for significant architectural decisions.
-- Keep changes focused and add tests for changed behavior.
-- Before considering implementation complete, run `go test ./...`, `go test -race ./...`, `go vet ./...`, and `go build ./cmd/server`.
+## Documentation Ownership
 
-Read `docs/design.md` and `docs/plan.md` before changing the architecture.
+When documentation changes are needed:
+
+- Update `README.md` for human users.
+- Update `CONTRIBUTING.md` for human contributors.
+- Update `docs/` for architecture, plans, and decisions.
+- Update this file only for agent-specific navigation or operating rules.
