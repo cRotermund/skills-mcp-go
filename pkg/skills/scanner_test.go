@@ -30,6 +30,15 @@ func TestScannerLoadsValidSkillsAndTextAssets(t *testing.T) {
 	}
 }
 
+func TestScannerFailsWhenRootDoesNotExist(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "missing")
+	if _, err := NewScanner().Scan(root); err == nil {
+		t.Fatal("Scan() succeeded for a missing root")
+	} else if !strings.Contains(err.Error(), "stat skill root") {
+		t.Fatalf("Scan() error = %v, want stat skill root context", err)
+	}
+}
+
 func TestScannerSkipsMalformedSkillsAndUnsupportedAssets(t *testing.T) {
 	root := t.TempDir()
 	writeSkillFixture(t, root, "valid", "1.0.0", "Valid")

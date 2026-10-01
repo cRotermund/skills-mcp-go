@@ -19,10 +19,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		logger.Fatalf("create skills directory: %v", err)
-	}
-
 	scanner := skills.NewScanner()
 	initial, err := scanner.Scan(root)
 	if err != nil {
