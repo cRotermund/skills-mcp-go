@@ -170,6 +170,38 @@ An MCP client can launch the server with a configuration equivalent to:
 
 Custom Go and LangGraph hosts should launch the binary as an MCP STDIO server and use their MCP client adapter to initialize the session and read resources, prompts, and tools.
 
+## Helping Agents Use Skills
+
+Making this MCP available to an agent does not guarantee that the agent will query it when a task matches a skill. Add a short instruction to the agent's global or project-level instructions so it knows when to discover and load skills. For example:
+
+```markdown
+# Agent Instructions
+
+Before starting work, check the skills MCP for any skill relevant to the task.
+
+Use the skill MCP tools directly:
+1. Call `list_available_skills`.
+2. Match the task against the returned skill names, descriptions, and triggers.
+3. If a relevant skill exists, call `load_skill_context` before drafting, editing files, or taking external actions.
+4. Follow the loaded skill instructions throughout the task.
+5. Do not load unrelated skills.
+6. If no relevant skill exists, proceed normally.
+7. If skill discovery or loading fails, distinguish that from "no relevant skill exists" and report the failure before proceeding when the skill could affect the task.
+
+Always check for a relevant skill before:
+- Creating or reviewing GitHub issues or pull requests.
+- Writing project documentation or agent instructions.
+- Performing specialized code, security, testing, release, or operational work.
+- Using an external service or repository workflow.
+
+Important:
+- `resources/list` and `resources/templates/list` are not skill discovery. Use `list_available_skills`.
+- Do not assume a skill is unavailable because the MCP exposes no concrete resources.
+- Before taking an external action, verify which skill was used, or that no relevant skill was found.
+```
+
+This is a starting point rather than a universal policy. Adjust the instruction to the agent host, available MCP tool names, trust model, and workflows in your environment. Some teams may want skills checked only for specific task categories, while others may require a skill check before every task. Keep the instruction explicit about what should happen when discovery or skill loading fails.
+
 ## Development
 
 Run the repository checks with:
