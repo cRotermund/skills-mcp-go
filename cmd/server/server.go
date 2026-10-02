@@ -147,6 +147,10 @@ type skillSummary struct {
 	Assets      []skills.Asset `json:"assets"`
 }
 
+type skillListResult struct {
+	Skills []skillSummary `json:"skills"`
+}
+
 func listSkillsTool() mcp.Tool {
 	return mcp.NewTool(
 		"list_available_skills",
@@ -177,7 +181,7 @@ func listSkillsHandler(repository *skills.Repository) server.ToolHandlerFunc {
 				Assets:      skill.Assets,
 			})
 		}
-		return mcp.NewToolResultJSON(summaries)
+		return mcp.NewToolResultJSON(skillListResult{Skills: summaries})
 	}
 }
 
