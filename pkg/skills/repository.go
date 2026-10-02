@@ -77,9 +77,17 @@ func (r *Repository) List() []Skill {
 func (r *Repository) Resolve(name, constraint string) (Skill, error) {
 	r.mu.RLock()
 	versions := append([]repositorySkill(nil), r.skills[name]...)
+	available := make([]string, 0, len(r.skills))
+	for availableName := range r.skills {
+		available = append(available, availableName)
+	}
 	r.mu.RUnlock()
 	if len(versions) == 0 {
-		return Skill{}, fmt.Errorf("skill %q not found", name)
+		sort.Strings(available)
+		if len(available) == 0 {
+			return Skill{}, fmt.Errorf("skill %q not found; no skills are available", name)
+		}
+		return Skill{}, fmt.Errorf("skill %q not found; available skills: %s", name, strings.Join(available, ", "))
 	}
 	if strings.TrimSpace(constraint) == "" {
 		return versions[0].skill, nil

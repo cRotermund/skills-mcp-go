@@ -76,8 +76,10 @@ func TestMCPServerHandlesStdioRequests(t *testing.T) {
 		`{"jsonrpc":"2.0","method":"notifications/initialized"}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}`,
 		`{"jsonrpc":"2.0","id":3,"method":"resources/templates/list","params":{}}`,
-		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"load_skill_context","arguments":{"skill_name":"demo"}}}`,
-		`{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"skill://demo/scripts/check.sh"}}`,
+		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"list_available_skills","arguments":{}}}`,
+		`{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"load_skill_context","arguments":{"skill_name":"demo"}}}`,
+		`{"jsonrpc":"2.0","id":6,"method":"resources/read","params":{"uri":"skill://demo/scripts/check.sh"}}`,
+		`{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"load_skill_context","arguments":{"skill_name":"missing"}}}`,
 	}, "\n") + "\n"
 
 	var output bytes.Buffer
@@ -96,10 +98,31 @@ func TestMCPServerHandlesStdioRequests(t *testing.T) {
 		}
 		responses[string(response.ID)] = response.Result
 	}
-	for _, id := range []string{"1", "2", "3", "4", "5"} {
+	for _, id := range []string{"1", "2", "3", "4", "5", "6", "7"} {
 		if len(responses[id]) == 0 {
 			t.Fatalf("missing response for request %s; output=%s", id, output.String())
 		}
+	}
+	var listResult struct {
+		StructuredContent map[string]json.RawMessage `json:"structuredContent"`
+	}
+	if err := json.Unmarshal(responses["4"], &listResult); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := listResult.StructuredContent["skills"]; !ok {
+		t.Fatalf("list_available_skills structuredContent = %#v", listResult.StructuredContent)
+	}
+	var missingResult struct {
+		IsError bool `json:"isError"`
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+	if err := json.Unmarshal(responses["7"], &missingResult); err != nil {
+		t.Fatal(err)
+	}
+	if !missingResult.IsError || len(missingResult.Content) == 0 || !strings.Contains(missingResult.Content[0].Text, "available skills: demo") {
+		t.Fatalf("unknown skill result = %#v", missingResult)
 	}
 	var initialize map[string]any
 	if err := json.Unmarshal(responses["1"], &initialize); err != nil {
